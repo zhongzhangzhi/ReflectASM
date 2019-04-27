@@ -2,6 +2,7 @@ package com.example.reflectasm.test;
 
 import com.esotericsoftware.reflectasm.MethodAccess;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.List;
 public class ReflectUtils {
 
 
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) {
         asmReflectByName(data());
         asmReflectByIndex(data());
         commonReflect(data());
@@ -75,22 +76,30 @@ public class ReflectUtils {
      * @param pojos
      * @throws Exception
      */
-    public static void commonReflect(List<TestPOJO> pojos) throws Exception{
-        List<String> res = new ArrayList<>();
+    public static void commonReflect(List<TestPOJO> pojos) {
+        try {
+            List<String> res = new ArrayList<>();
 
-        Class<?> c = TestPOJO.class;
+            Class<?> c = TestPOJO.class;
+            Method m1 = c.getMethod("getName");
+            Method m2 = c.getMethod("getId");
 
-        Long time = System.currentTimeMillis();
-        for (int i = 0; i < pojos.size(); i++) {
-            Method m = c.getMethod("getName");
-            String name = String.valueOf(m.invoke(pojos.get(i)));
-            m = c.getMethod("getId");
-            String id = String.valueOf(m.invoke(pojos.get(i)));
-            res.add(name);
-            res.add(id);
+            Long time = System.currentTimeMillis();
+            for (int i = 0; i < pojos.size(); i++) {
+                String name = String.valueOf(m1.invoke(pojos.get(i)));
+                String id = String.valueOf(m2.invoke(pojos.get(i)));
+                res.add(name);
+                res.add(id);
+            }
+
+            System.out.println("java Reflect >> 耗时：" + (System.currentTimeMillis() - time) + "ms; 次数：" + res.size());
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
         }
-
-        System.out.println("java Reflect >> 耗时：" + (System.currentTimeMillis() - time) + "ms; 次数：" + res.size());
     }
 
     /**
@@ -98,30 +107,38 @@ public class ReflectUtils {
      * @param pojos
      * @throws Exception
      */
-    public static void accessibleReflect(List<TestPOJO> pojos) throws Exception {
-        List<String> res = new ArrayList<>();
+    public static void accessibleReflect(List<TestPOJO> pojos) {
+        try {
+            List<String> res = new ArrayList<>();
 
-        Class<?> c = TestPOJO.class;
-        Long time = System.currentTimeMillis();
-        for (int i = 0; i < pojos.size(); i++) {
-            Method m = c.getMethod("getName");
+            Class<?> c = TestPOJO.class;
+            Method m1 = c.getMethod("getName");
+            Method m2 = c.getMethod("getId");
             //  避过java安全验证
-            m.setAccessible(true);
-            String name = String.valueOf(m.invoke(pojos.get(i)));
-            m = c.getMethod("getId");
-            //  避过java安全验证
-            m.setAccessible(true);
-            String id = String.valueOf(m.invoke(pojos.get(i)));
-            res.add(name);
-            res.add(id);
+            m1.setAccessible(true);
+            m2.setAccessible(true);
+
+            Long time = System.currentTimeMillis();
+            for (int i = 0; i < pojos.size(); i++) {
+                String name = String.valueOf(m1.invoke(pojos.get(i)));
+                String id = String.valueOf(m2.invoke(pojos.get(i)));
+                res.add(name);
+                res.add(id);
+            }
+
+            System.out.println("java accessible Reflect >> 耗时：" + (System.currentTimeMillis() - time) + "ms; 次数：" + res.size());
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
         }
-
-        System.out.println("java accessible Reflect >> 耗时：" + (System.currentTimeMillis() - time) + "ms; 次数：" + res.size());
     }
 
     public static List<TestPOJO> data() {
         List<TestPOJO> pojos = new ArrayList<>();
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 0; i < 50000; i++) {
             TestPOJO pojo = new TestPOJO("钟章志" + i, i);
             pojos.add(pojo);
         }
